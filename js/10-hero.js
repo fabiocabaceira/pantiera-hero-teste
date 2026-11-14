@@ -5,19 +5,25 @@
   const hl0 = $('[data-hero-logo]');
   // 14/11: a abertura do logótipo só sai quando o hero já anda (filme a tocar ou o filme em canvas), no máximo 5,6 s
   let heroPronto; DA.heroPronto = new Promise((r) => (heroPronto = r));
+  // 14/11 (Fábio, dados móveis: «parece 360p»): no telemóvel em pé o logótipo espera também que o filme alto tenha
+  // buffer para seguir sem parar (canplaythrough); o canvas do modo de poupança também o liberta
+  let filmeAguenta; const aguenta = new Promise((r) => (filmeAguenta = r));
   // 13/11: sem zoom no cartaz (o João não quer zoom no hero); o cartaz desliza devagar de lado (estilo.css, .hero-poster)
   const fimDoLogo = () => {};
 
   /* ---------- 13/11: o filme oficial do Pantiera 32 (visto de cima, a abrir a esteira) ----------
      Pedido só depois do load e da abertura, para não entrar na conta do LCP. Escolhe vertical ou horizontal
      e o tamanho pelos píxeis reais do ecrã; pára fora do ecrã e com o separador escondido. */
-  if (!video || reduz) heroPronto();
+  if (!video || reduz) { heroPronto(); filmeAguenta(); }
   if (video && !reduz) {
     const escolhe = () => {
       const vert = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
       const lista = (vert ? video.dataset.v : video.dataset.h).split(',').map((s) => { const [u, w] = s.trim().split(' '); return { u, w: +w }; });
+      // 14/11 (Fábio): no telemóvel em pé vai sempre o filme alto (1080), em wifi ou em dados. O iPhone mostra o filme
+      // a 1424 px de largura e o 720 ficava ampliado 2x. O leve (720) só com «Poupança de dados» (Save-Data) ligada.
+      if (vert) return (navigator.connection && navigator.connection.saveData ? lista[0] : lista[lista.length - 1]).u;
       // 13/11 (João: «máximo 4K possível»): quase todos os píxeis reais do ecrã; a montagem nativa vai até 2560
-      const precisa = innerWidth * Math.min(devicePixelRatio || 1, 2) * (vert ? 0.66 : 0.9);
+      const precisa = innerWidth * Math.min(devicePixelRatio || 1, 2) * 0.9;
       return (lista.find((o) => o.w >= precisa) || lista[lista.length - 1]).u;
     };
     let visivel = true;
@@ -37,6 +43,7 @@
        As imagens só se pedem neste caso. Ao primeiro toque o filme arranca e passa à frente (classe .vivo). */
     const iniciaPase = () => {
       if (pase || vivo) return;
+      filmeAguenta();
       const vert = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
       pase = document.createElement('div'); pase.className = 'hero-pase'; pase.setAttribute('aria-hidden', 'true');
       video.before(pase);
@@ -105,9 +112,14 @@
     const pedeGesto = () => { iniciaPase(); if (armado) return; armado = true; GESTOS.forEach((t) => addEventListener(t, desbloqueio, { capture: true, passive: true })); };
     const toca = () => { if (visivel && !document.hidden) video.play().catch(pedeGesto); };
     const arranca = () => {
+      const vert = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
+      // 14/11 (Fábio): no telemóvel em pé o filme alto carrega todo por baixo da abertura. Se a rede atrasar, fica o cartaz
+      // em movimento até o filme andar. O canvas do modo de poupança (540 px) já não entra por a rede ser lenta, só
+      // quando o iOS recusa o play: era ele o «360p» dos dados móveis, e as 258 imagens tiravam rede ao filme.
+      if (vert) { video.preload = 'auto'; video.addEventListener('canplaythrough', filmeAguenta, { once: true }); }
       video.src = escolhe();
       toca();
-      setTimeout(() => { if (!vivo) iniciaPase(); }, 3000);
+      if (!vert) setTimeout(() => { if (!vivo) iniciaPase(); }, 3000);
       new IntersectionObserver(([e]) => { visivel = e.isIntersecting; visivel ? toca() : video.pause(); }).observe(hero);
       document.addEventListener('visibilitychange', () => (document.hidden ? video.pause() : toca()));
     };
@@ -207,7 +219,9 @@
   requestAnimationFrame(quadro);
     const al = $('svg', alvo);
     // o logótipo só voa quando o hero já anda (nunca se entra num hero parado), entre 3,1 e 5,6 s
-    Promise.all([espera(3100), Promise.race([DA.heroPronto, espera(5600)])]).then(() => {
+    // 14/11 (Fábio): no telemóvel em pé, entre 3,1 e 7 s, com o filme alto a tocar e com buffer para seguir
+    const emPe = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
+    Promise.all([espera(3100), Promise.race([emPe ? Promise.all([DA.heroPronto, aguenta]) : DA.heroPronto, espera(emPe ? 7000 : 5600)])]).then(() => {
       const a = al.getBoundingClientRect(), b = logo.getBoundingClientRect();
       logo.style.transition = 'transform .85s cubic-bezier(.7,0,.2,1)';
       logo.style.transform = `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})`;
