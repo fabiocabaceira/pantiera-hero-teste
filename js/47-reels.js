@@ -25,7 +25,11 @@
   let cur = 0, dentro = false, comSom = -1;
   // 13/11 (João: «com áudio e autoplay»): o reel do centro toca com som. Os browsers só deixam o som depois do primeiro
   // gesto da pessoa na página; até lá toca mudo e o som entra sozinho no primeiro toque, scroll ou tecla.
-  let somLigado = true, gesto = false;
+  // 14/11 (João e Fábio: «o som só funciona ao clicar 2 vezes»). O som entrava sozinho no primeiro scroll, mas o browser
+  // só deixa ligar o som dentro de um toque: o vídeo ficava mudo e o botão já dizia «com som», por isso o 1.º toque
+  // «desligava» um som que nunca tocou. Agora: começa sempre mudo, o botão mostra mudo, e um toque liga o som logo
+  // (dentro do próprio toque). O botão segue sempre o estado real do vídeo (volumechange), nunca uma intenção.
+  let somLigado = false, gesto = false;
   // (validação 13/11) o toque no botão do som não conta aqui: é o próprio botão que decide (ver em baixo)
   const aoGesto = (e) => { if (e && e.target && e.target.closest && e.target.closest('.reels-som')) return; gesto = true; ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach((t) => removeEventListener(t, aoGesto, true)); pinta(); };
   ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach((t) => addEventListener(t, aoGesto, { capture: true, passive: true }));
@@ -46,11 +50,17 @@
       if (a <= 1 && !v.getAttribute('src')) v.src = v.dataset.src;
       // (13/11) o do centro carrega já; os dois vizinhos pré-carregam o início para a troca de reel ser instantânea
       if (a <= 1 && dentro) v.preload = a === 0 ? 'auto' : 'metadata';
-      if (a === 0 && dentro) { v.muted = !(somLigado && gesto); v.play().catch(() => { if (lis[cur] === li) { v.muted = true; v.play().catch(() => {}); } }); } else { v.pause(); v.muted = true; }
-      const b = li.querySelector('.reels-som'); const ouve = somLigado && gesto; b.setAttribute('aria-pressed', String(ouve)); b.setAttribute('aria-label', ouve ? 'Silenciar' : 'Activar sonido');
+      // se o browser recusar o som (outro reel sem toque), toca mudo e o som fica desligado: o botão volta a «mudo»
+      if (a === 0 && dentro) { v.muted = !somLigado; v.play().catch(() => { if (lis[cur] === li) { somLigado = false; v.muted = true; v.play().catch(() => {}); } }); } else { v.pause(); v.muted = true; }
+      botao(li);
     });
     num.textContent = `${String((cur % R) + 1).padStart(2, '0')} / ${String(R).padStart(2, '0')}`;
   };
+  function botao(li) {
+    const v = li.querySelector('video'), b = li.querySelector('.reels-som'); const ouve = !v.muted && !v.paused;
+    b.setAttribute('aria-pressed', String(ouve)); b.setAttribute('aria-label', ouve ? 'Silenciar' : 'Activar sonido');
+  }
+  lis.forEach((li) => { const v = li.querySelector('video'); ['volumechange', 'play', 'pause'].forEach((t) => v.addEventListener(t, () => botao(li))); });
   const vai = (i) => { cur = (i + N) % N; pinta(); };
   raiz.querySelector('[data-reels-ant]').addEventListener('click', () => vai(cur - 1));
   raiz.querySelector('[data-reels-seg]').addEventListener('click', () => vai(cur + 1));
@@ -58,7 +68,13 @@
   palco.addEventListener('click', (e) => {
     const b = e.target.closest('.reels-som'); if (!b) return;
     // o botão mostra o que se ouve: se estava calado (mesmo antes do primeiro gesto), o toque liga o som
-    const ouvia = somLigado && gesto; somLigado = !ouvia; gesto = true; pinta();
+    // tudo dentro do toque (o iOS só deixa o som aqui): o vídeo do centro muda já, sem esperar pelo desenho
+    const li = b.closest('li'), v = li && li.querySelector('video'); if (!v) return;
+    somLigado = v.muted; gesto = true;
+    if (!v.getAttribute('src')) v.src = v.dataset.src;
+    v.muted = !somLigado;
+    if (somLigado) v.play().catch(() => { somLigado = false; v.muted = true; v.play().catch(() => {}); });
+    pinta();
   });
   // arrastar com o dedo ou o rato
   let x0 = null;
