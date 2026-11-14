@@ -1,5 +1,7 @@
 /* De Antonio Yachts: núcleo partilhado. Cada ficheiro de js/ é uma secção e regista-se aqui. Sem dependências. */
 window.DA = (() => {
+  // o CSS completo já chegou quando os scripts correm (esperam por ele): mostra o resto da página (index.html, css-primeiro-ecra)
+  document.documentElement.classList.add('css-ok');
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   // 14/11 (João: «no meu telemóvel não tenho a abertura do logotipo, o hero não começa sozinho»). O iPhone dele tem
