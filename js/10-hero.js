@@ -28,6 +28,8 @@
     video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', '');
     let tAnt = -1, avancos = 0, ultimoAvanco = 0, vivo = false;
     let pase = null, marca = null;
+    // 14/11 (hero V3 do telemóvel): cada filme tem os seus tempos do lema; a palavra é a de maior tempo já passado
+    let palavra = () => 0;
     const poeVivo = (v) => { if (v === vivo) return; vivo = v; video.classList.toggle('a-tocar', v); video.classList.toggle('cai', !v); hero.classList.toggle('vivo', v); if (v) heroPronto(); };
     /* 14/11 (João, iPhone em modo de poupança de energia: «nada está a funcionar»). Nesse modo o iOS proíbe qualquer
        vídeo de tocar sozinho e o hero ficava parado no cartaz. Quando o play é recusado, o hero passa pelas cenas do
@@ -49,11 +51,12 @@
        (161 imagens a 12 por segundo, misturadas duas a duas para andar liso). O iOS não bloqueia um canvas. As imagens
        ficam comprimidas e só ±6 descomprimidas; se a rede atrasar, o filme espera em vez de saltar. */
     const filmeEmCanvas = () => {
-      const N = 161, FPS = 12, DUR = N / FPS, J = 6;
+      // 14/11: o filme do telemóvel diz no HTML onde estão as suas imagens e quantas são (hero V3: 258, 21,5 s)
+      const N = +video.dataset.paseN || 258, FPS = 12, DUR = N / FPS, J = 6, PASTA = video.dataset.pase || 'media/heroq/v3/';
       const tela = document.createElement('canvas'); tela.className = 'hero-pase-tela'; pase.appendChild(tela);
       const ctx = tela.getContext('2d', { alpha: false });
       const blobs = [], bms = new Map(), caminho = new Set();
-      const url = (i) => `media/heroq/v/${String(i).padStart(4, '0')}.webp`;
+      const url = (i) => `${PASTA}${String(i).padStart(4, '0')}.webp`;
       let prox = 0, ativos = 0, t0 = 0, pos = 0, ultimo = 0, chave = '', pronto = false;
       const pede = () => { while (ativos < 6 && prox < N) { const i = prox++; ativos++; fetch(url(i)).then((r) => (r.ok ? r.blob() : null)).then((bl) => { if (bl) blobs[i] = bl; }, () => {}).finally(() => { ativos--; pede(); }); } };
       pede();
@@ -79,7 +82,7 @@
         ctx.globalAlpha = 1; ctx.drawImage(base, 0, 0);
         if (f > 0.06 && bms.has(j)) { ctx.globalAlpha = f; ctx.drawImage(bms.get(j), 0, 0); ctx.globalAlpha = 1; }
         if (!pase.classList.contains('on')) { pase.classList.add('on'); heroPronto(); }
-        if (marca) { const s = pos / FPS; marca(s >= 8.8 ? 2 : s >= 4.6 ? 1 : 0); }
+        if (marca) marca(palavra(pos / FPS));
       };
       requestAnimationFrame(tick);
     };
@@ -113,11 +116,14 @@
     if (lema) {
       const pals = [...lema.children]; let ativa = -1;
       marca = (i) => { if (i !== ativa) { if (ativa >= 0) pals[ativa].classList.remove('on'); pals[i].classList.add('on'); ativa = i; } };
-      video.addEventListener('timeupdate', () => {
-        const t = video.currentTime; let i = 0;
-        pals.forEach((p, k) => { if (t >= +p.dataset.de) i = k; });
-        marca(i);
-      });
+      // telemóvel em pé: data-de-v (o filme vertical tem outra ordem de cenas); computador: data-de, como sempre
+      palavra = (t) => {
+        const vert = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
+        let i = 0, melhor = -1;
+        pals.forEach((p, k) => { const d = +(vert && p.dataset.deV !== undefined ? p.dataset.deV : p.dataset.de); if (t >= d && d > melhor) { melhor = d; i = k; } });
+        return i;
+      };
+      video.addEventListener('timeupdate', () => marca(palavra(video.currentTime)));
     }
     // 13/11 (João: «o vídeo começa antes da abertura total do logótipo»): arranca no load, por baixo da abertura,
     // para já estar a correr quando o logótipo voa para o cabeçalho; nunca antes do load, para não pesar no LCP
