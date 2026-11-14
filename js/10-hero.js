@@ -3,12 +3,15 @@
   /* ---------- HERO: o filme ---------- */
   const hero = $('[data-hero]'), video = $('[data-hero-video]'), texto = $('[data-hero-texto]'), poster = $('[data-hero-poster]');
   const hl0 = $('[data-hero-logo]');
+  // 14/11: a abertura do logótipo só sai quando o hero já anda (filme a tocar ou o filme em canvas), no máximo 5,6 s
+  let heroPronto; DA.heroPronto = new Promise((r) => (heroPronto = r));
   // 13/11: sem zoom no cartaz (o João não quer zoom no hero); o cartaz desliza devagar de lado (estilo.css, .hero-poster)
   const fimDoLogo = () => {};
 
   /* ---------- 13/11: o filme oficial do Pantiera 32 (visto de cima, a abrir a esteira) ----------
      Pedido só depois do load e da abertura, para não entrar na conta do LCP. Escolhe vertical ou horizontal
      e o tamanho pelos píxeis reais do ecrã; pára fora do ecrã e com o separador escondido. */
+  if (!video || reduz) heroPronto();
   if (video && !reduz) {
     const escolhe = () => {
       const vert = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
@@ -25,7 +28,7 @@
     video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', '');
     let tAnt = -1, avancos = 0, ultimoAvanco = 0, vivo = false;
     let pase = null, marca = null;
-    const poeVivo = (v) => { if (v === vivo) return; vivo = v; video.classList.toggle('a-tocar', v); video.classList.toggle('cai', !v); hero.classList.toggle('vivo', v); };
+    const poeVivo = (v) => { if (v === vivo) return; vivo = v; video.classList.toggle('a-tocar', v); video.classList.toggle('cai', !v); hero.classList.toggle('vivo', v); if (v) heroPronto(); };
     /* 14/11 (João, iPhone em modo de poupança de energia: «nada está a funcionar»). Nesse modo o iOS proíbe qualquer
        vídeo de tocar sozinho e o hero ficava parado no cartaz. Quando o play é recusado, o hero passa pelas cenas do
        próprio filme (2 imagens por cena, tiradas do vídeo), em fundidos com um deslize lento, e o lema acende com elas.
@@ -40,7 +43,7 @@
       const imgs = [0, 1, 2, 3, 4, 5].map((i) => { const im = new Image(); im.alt = ''; im.decoding = 'async'; im.src = `media/pase/h${i}.webp`; pase.appendChild(im); return im; });
       let k = -1;
       const passa = () => { if (vivo || document.hidden) return; k = (k + 1) % imgs.length; imgs.forEach((im, j) => im.classList.toggle('on', j === k)); if (marca) marca(Math.floor(k / 2)); };
-      (imgs[0].decode ? imgs[0].decode() : Promise.resolve()).catch(() => {}).then(() => { passa(); setInterval(passa, 2800); });
+      (imgs[0].decode ? imgs[0].decode() : Promise.resolve()).catch(() => {}).then(() => { passa(); heroPronto(); setInterval(passa, 2800); });
     };
     /* 14/11 (João: «refaz o hero»): no telemóvel, com o vídeo proibido, o próprio filme corre imagem a imagem num canvas
        (161 imagens a 12 por segundo, misturadas duas a duas para andar liso). O iOS não bloqueia um canvas. As imagens
@@ -75,20 +78,21 @@
         if (tela.width !== base.width) { tela.width = base.width; tela.height = base.height; }
         ctx.globalAlpha = 1; ctx.drawImage(base, 0, 0);
         if (f > 0.06 && bms.has(j)) { ctx.globalAlpha = f; ctx.drawImage(bms.get(j), 0, 0); ctx.globalAlpha = 1; }
-        if (!pase.classList.contains('on')) pase.classList.add('on');
+        if (!pase.classList.contains('on')) { pase.classList.add('on'); heroPronto(); }
         if (marca) { const s = pos / FPS; marca(s >= 8.8 ? 2 : s >= 4.6 ? 1 : 0); }
       };
       requestAnimationFrame(tick);
     };
-    video.addEventListener('timeupdate', () => {
-      const t = video.currentTime;
-      if (t !== tAnt) { if (t > tAnt || t < 0.3) avancos++; tAnt = t; ultimoAvanco = performance.now(); }
-      if (avancos >= 2 && !video.paused) poeVivo(true);
-    });
+    // 14/11 (João, iPhone: «o vídeo do hero não está a funcionar»): o iOS espaça os 'timeupdate' e a vigia escondia um
+    // filme que estava a tocar. Agora lê-se o tempo do filme diretamente, a cada 150 ms.
+    setInterval(() => {
+      const t = video.currentTime, agora = performance.now();
+      if (t !== tAnt) { if (t > tAnt || t < 0.3) avancos++; tAnt = t; ultimoAvanco = agora; if (avancos >= 2 && !video.paused) poeVivo(true); }
+      else if (vivo && !video.seeking && !video.paused && agora - ultimoAvanco > 1500) { avancos = 0; poeVivo(false); }
+    }, 150);
     // (validação 13/11) um 'waiting' curto (a volta do filme no Android, micro-pausas) não pode trazer o cartaz de
     // volta: isso fazia uma imagem dupla. Só a pausa a sério ou a vigia (sem avançar há mais de 600 ms) o fazem.
     ['pause', 'emptied'].forEach((ev) => video.addEventListener(ev, () => { avancos = 0; poeVivo(false); }));
-    setInterval(() => { if (vivo && !video.seeking && performance.now() - ultimoAvanco > 600) { avancos = 0; poeVivo(false); } }, 200);
     // modo de poupança de energia e browsers das apps: o filme só arranca com um gesto que conta para o sistema
     // (o iOS só aceita touchend/click). Os ouvintes só saem quando o play resultar; se falhar, ficam à espera do próximo.
     const GESTOS = ['touchend', 'pointerup', 'click', 'keydown'];
@@ -100,6 +104,7 @@
     const arranca = () => {
       video.src = escolhe();
       toca();
+      setTimeout(() => { if (!vivo) iniciaPase(); }, 3000);
       new IntersectionObserver(([e]) => { visivel = e.isIntersecting; visivel ? toca() : video.pause(); }).observe(hero);
       document.addEventListener('visibilitychange', () => (document.hidden ? video.pause() : toca()));
     };
@@ -192,13 +197,14 @@
   };
   requestAnimationFrame(quadro);
     const al = $('svg', alvo);
-    setTimeout(() => {
+    // o logótipo só voa quando o hero já anda (nunca se entra num hero parado), entre 3,1 e 5,6 s
+    Promise.all([espera(3100), Promise.race([DA.heroPronto, espera(5600)])]).then(() => {
       const a = al.getBoundingClientRect(), b = logo.getBoundingClientRect();
       logo.style.transition = 'transform .85s cubic-bezier(.7,0,.2,1)';
       logo.style.transform = `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})`;
       texto.classList.add('entra');
-    }, 3100);
-    setTimeout(() => { document.body.classList.remove('a-abrir'); ab.remove(); raiz.style.overflow = ''; texto.classList.add('vivo'); avisa(); setTimeout(() => texto.classList.add('assente'), 2200); }, 4000);
+      setTimeout(() => { document.body.classList.remove('a-abrir'); ab.remove(); raiz.style.overflow = ''; texto.classList.add('vivo'); avisa(); setTimeout(() => texto.classList.add('assente'), 2200); }, 900);
+    });
   }
 
   // o --q escreve-se só nas folhas que o usam (cartaz, filme, texto) e está registado sem herança (10-hero.css):
