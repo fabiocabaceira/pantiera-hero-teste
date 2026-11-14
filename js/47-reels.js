@@ -88,6 +88,10 @@
   new IntersectionObserver(([e]) => { dentro = e.isIntersecting; pinta(); }, { threshold: 0.3 }).observe(raiz);
   // 14/11 (iPhone em modo de poupança de energia): o iOS só deixa um vídeo tocar dentro de um toque. Cada toque com os
   // reels à vista põe o do centro a andar, se o sistema o tiver parado.
+  // o primeiro toque em qualquer sítio da página desbloqueia o primeiro reel (play e pausa dentro do toque): depois o iOS
+  // deixa-o arrancar sozinho quando chega ao ecrã, mesmo em modo de poupança
+  let desbloqueado = false;
+  addEventListener('touchend', () => { if (desbloqueado || dentro) return; desbloqueado = true; const v = lis[cur].querySelector('video'); if (!v.getAttribute('src')) v.src = v.dataset.src; v.muted = true; const pr = v.play(); if (pr) pr.then(() => { if (!dentro) v.pause(); }, () => { desbloqueado = false; }); }, { capture: true, passive: true });
   addEventListener('touchend', () => { if (!dentro) return; const v = lis[cur].querySelector('video'); if (v.paused) { if (!v.getAttribute('src')) v.src = v.dataset.src; v.play().catch(() => {}); } }, { capture: true, passive: true });
   document.addEventListener('visibilitychange', () => { if (document.hidden) lis[cur].querySelector('video').pause(); else pinta(); });
   addEventListener('resize', pinta);

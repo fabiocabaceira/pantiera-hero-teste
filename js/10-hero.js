@@ -51,7 +51,7 @@
       const ctx = tela.getContext('2d', { alpha: false });
       const blobs = [], bms = new Map(), caminho = new Set();
       const url = (i) => `media/heroq/v/${String(i).padStart(4, '0')}.webp`;
-      let prox = 0, ativos = 0, t0 = 0, pos = 0, ultimo = 0, chave = '';
+      let prox = 0, ativos = 0, t0 = 0, pos = 0, ultimo = 0, chave = '', pronto = false;
       const pede = () => { while (ativos < 6 && prox < N) { const i = prox++; ativos++; fetch(url(i)).then((r) => (r.ok ? r.blob() : null)).then((bl) => { if (bl) blobs[i] = bl; }, () => {}).finally(() => { ativos--; pede(); }); } };
       pede();
       const janela = (c) => {
@@ -65,7 +65,9 @@
         const dt = ultimo ? Math.min(100, t - ultimo) : 0; ultimo = t;
         const a = Math.floor(pos), b = (a + 1) % N;
         // só avança se a imagem seguinte já cá estiver (rede lenta: espera, nunca salta)
-        if (bms.has(b)) pos = (pos + dt * FPS / 1000) % N;
+        // arranca com 18 imagens já cá (1,5 s de filme), para não engasgar logo no início; depois só avança se a seguinte existir
+        if (!pronto) pronto = blobs.slice(0, 18).filter(Boolean).length >= 18;
+        if (pronto && bms.has(b)) pos = (pos + dt * FPS / 1000) % N;
         const i = Math.floor(pos), f = pos - i, j = (i + 1) % N;
         janela(i);
         const base = bms.get(i); if (!base) return;
@@ -123,7 +125,7 @@
     const temLCP = (PerformanceObserver.supportedEntryTypes || []).includes('largest-contentful-paint');
     if (temLCP) { try { new PerformanceObserver(() => vai()).observe({ type: 'largest-contentful-paint', buffered: true }); } catch (e) { vai(); } }
     else vai();
-    setTimeout(vai, 1500);
+    setTimeout(vai, matchMedia('(max-width: 899px)').matches ? 700 : 1500);
   }
 
   /* ---------- abertura: a linha de água risca o ecrã, as letras emergem, o logótipo voa para o cabeçalho ---------- */
