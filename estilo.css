@@ -2990,3 +2990,7 @@ html.com-camada .camada-3d{top:0}
 .hero-poster,.hero.vivo .hero-poster{animation:none!important;translate:none!important;transform:none!important;inset:0!important;height:100%!important;width:100%!important}
 .hero-pase img,.hero-pase img.on{animation:none!important;transform:none!important}
 .hero-pase img{transition:opacity 1.6s ease-in-out}
+/* 14/11: o filme do hero em canvas quando o iPhone proíbe o vídeo (modo de poupança) */
+.hero-pase-tela{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 60%;opacity:0;transition:opacity .6s ease}
+.hero-pase.on .hero-pase-tela{opacity:1}
+.hero-pase.fora{opacity:0;transition:opacity .5s}

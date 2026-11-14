@@ -34,11 +34,49 @@
       if (pase || vivo) return;
       const vert = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
       pase = document.createElement('div'); pase.className = 'hero-pase'; pase.setAttribute('aria-hidden', 'true');
-      const imgs = [0, 1, 2, 3, 4, 5].map((i) => { const im = new Image(); im.alt = ''; im.decoding = 'async'; im.src = `media/pase/${vert ? 'v' : 'h'}${i}.webp`; pase.appendChild(im); return im; });
       video.before(pase);
+      if (vert) return filmeEmCanvas();
+      // computador: as cenas em fundidos (2 imagens por cena)
+      const imgs = [0, 1, 2, 3, 4, 5].map((i) => { const im = new Image(); im.alt = ''; im.decoding = 'async'; im.src = `media/pase/h${i}.webp`; pase.appendChild(im); return im; });
       let k = -1;
       const passa = () => { if (vivo || document.hidden) return; k = (k + 1) % imgs.length; imgs.forEach((im, j) => im.classList.toggle('on', j === k)); if (marca) marca(Math.floor(k / 2)); };
       (imgs[0].decode ? imgs[0].decode() : Promise.resolve()).catch(() => {}).then(() => { passa(); setInterval(passa, 2800); });
+    };
+    /* 14/11 (João: «refaz o hero»): no telemóvel, com o vídeo proibido, o próprio filme corre imagem a imagem num canvas
+       (161 imagens a 12 por segundo, misturadas duas a duas para andar liso). O iOS não bloqueia um canvas. As imagens
+       ficam comprimidas e só ±6 descomprimidas; se a rede atrasar, o filme espera em vez de saltar. */
+    const filmeEmCanvas = () => {
+      const N = 161, FPS = 12, DUR = N / FPS, J = 6;
+      const tela = document.createElement('canvas'); tela.className = 'hero-pase-tela'; pase.appendChild(tela);
+      const ctx = tela.getContext('2d', { alpha: false });
+      const blobs = [], bms = new Map(), caminho = new Set();
+      const url = (i) => `media/heroq/v/${String(i).padStart(4, '0')}.webp`;
+      let prox = 0, ativos = 0, t0 = 0, pos = 0, ultimo = 0, chave = '';
+      const pede = () => { while (ativos < 6 && prox < N) { const i = prox++; ativos++; fetch(url(i)).then((r) => (r.ok ? r.blob() : null)).then((bl) => { if (bl) blobs[i] = bl; }, () => {}).finally(() => { ativos--; pede(); }); } };
+      pede();
+      const janela = (c) => {
+        for (let d = 0; d <= J; d++) { const i = (c + d) % N; if (!blobs[i] || bms.has(i) || caminho.has(i)) continue; caminho.add(i); createImageBitmap(blobs[i]).then((bm) => { caminho.delete(i); bms.set(i, bm); }, () => caminho.delete(i)); }
+        for (const [i, bm] of bms) { const dist = (i - c + N) % N; if (dist > J + 2) { bm.close(); bms.delete(i); } }
+      };
+      const tick = (t) => {
+        requestAnimationFrame(tick);
+        if (vivo) { pase.classList.add('fora'); return; }
+        if (document.hidden) { ultimo = t; return; }
+        const dt = ultimo ? Math.min(100, t - ultimo) : 0; ultimo = t;
+        const a = Math.floor(pos), b = (a + 1) % N;
+        // só avança se a imagem seguinte já cá estiver (rede lenta: espera, nunca salta)
+        if (bms.has(b)) pos = (pos + dt * FPS / 1000) % N;
+        const i = Math.floor(pos), f = pos - i, j = (i + 1) % N;
+        janela(i);
+        const base = bms.get(i); if (!base) return;
+        const k = i + ':' + Math.round(f * 8); if (k === chave) return; chave = k;
+        if (tela.width !== base.width) { tela.width = base.width; tela.height = base.height; }
+        ctx.globalAlpha = 1; ctx.drawImage(base, 0, 0);
+        if (f > 0.06 && bms.has(j)) { ctx.globalAlpha = f; ctx.drawImage(bms.get(j), 0, 0); ctx.globalAlpha = 1; }
+        if (!pase.classList.contains('on')) pase.classList.add('on');
+        if (marca) { const s = pos / FPS; marca(s >= 8.8 ? 2 : s >= 4.6 ? 1 : 0); }
+      };
+      requestAnimationFrame(tick);
     };
     video.addEventListener('timeupdate', () => {
       const t = video.currentTime;
