@@ -153,7 +153,7 @@
   const curtoPinta = () => {
     pedidoC = 0;
     if (!curto.matches) return;
-    const r = palco.getBoundingClientRect(), vh = innerHeight;
+    const r = palco.getBoundingClientRect(), vh = DA.ecra.h; // altura fixa: a barra do browser não mexe no progresso
     const q = -r.top / vh;
     // a proa entra no ecrã com o palco a 93 %: o barco acende-se aí e a luz corre até à popa com o palco no topo
     raiz.style.setProperty('--fl', lin(-1, -0.82, q).toFixed(4));

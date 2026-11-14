@@ -30,7 +30,7 @@
     const solto = movel.matches;
     const k = solto ? 0 : suave(PAUSA_REELS, PAUSA_REELS + SUBIDA, y);
     trilho.style.transform = solto ? '' : `translate3d(0,${(-k * bh).toFixed(1)}px,0)`;
-    const bt = solto ? banda.getBoundingClientRect().top / innerHeight : 0;
+    const bt = solto ? banda.getBoundingClientRect().top / (window.DA ? DA.ecra.h : innerHeight) : 0;
     // 14/11 (João: «o botão não está a aparecer a tempo»). Medido frame a frame: a entrada corria por relógio, com
     // atrasos até 2,5 s, e ao chegar à pausa o botão ainda estava invisível (69 % das imagens com ele incompleto).
     // Agora anda com o scroll: a linha desce, a folha abre do centro, o barco ganha nitidez, a placa entra e por fim a

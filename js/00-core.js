@@ -13,7 +13,26 @@ window.DA = (() => {
      innerHeight e innerWidth guardam-se no resize; scrollY lê-se no início do fotograma, antes de qualquer escrita.
      Nenhuma secção chama getBoundingClientRect no laço: as caixas vêm de DA.caixa(el), em coordenadas da página,
      medidas todas de uma vez só quando o desenho muda (resize, fontes, imagens, ResizeObserver do corpo). */
-  const ecra = { y: scrollY, h: innerHeight, w: innerWidth, mexeu: true, t: 0 };
+  /* ---------- a altura do ecrã fixa (14/11, vídeo do João na app Google do iPhone) ----------
+     Nos browsers dentro de apps (Google, Chrome do iPhone, Instagram, WhatsApp) a página encolhe quando a barra aparece,
+     e vh, svh e dvh mudam com ela: as secções de vários ecrãs mudavam de altura e o que estava à vista saltava até
+     433 px. A altura mede-se uma vez (a maior entre o ecrã e 100lvh) e escreve-se em --u (1 % do ecrã, em px); o CSS
+     usa calc(N * var(--u)) em vez de Nvh. No telemóvel só muda quando muda a largura (rodar o telemóvel); no
+     computador muda com a janela. */
+  const toque = matchMedia('(hover: none) and (pointer: coarse)').matches;
+  const sonda = document.createElement('div');
+  sonda.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none';
+  document.documentElement.appendChild(sonda);
+  let alto = 0, largAlto = 0;
+  const fixaAlto = () => {
+    alto = Math.max(innerHeight, sonda.offsetHeight || 0); largAlto = innerWidth;
+    const h = document.documentElement;
+    h.style.setProperty('--u', (alto / 100).toFixed(3) + 'px');
+    // as regras de ecrã baixo do CSS seguem esta altura fixa, não um @media (max-height) que a barra faz trocar
+    h.classList.toggle('ecra-baixo', alto <= 700); h.classList.toggle('ecra-mbaixo', alto <= 600);
+  };
+  fixaAlto();
+  const ecra = { y: scrollY, h: alto, w: innerWidth, mexeu: true, t: 0 };
   const vh = () => ecra.h;
   const caixas = new Map(); // el -> { top, left, width, height, bottom, right } na página
   let sujas = true;
@@ -66,7 +85,11 @@ window.DA = (() => {
   });
   const ocioso = (fn, ms = 600) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: ms }) : setTimeout(fn, 1));
 
-  addEventListener('resize', () => { ecra.h = innerHeight; ecra.w = innerWidth; sujas = true; }, { passive: true });
+  // a barra do browser a abrir e fechar muda só a altura: no telemóvel não mexe em nada (nem nas medidas das secções)
+  addEventListener('resize', () => {
+    if (!toque || innerWidth !== largAlto) { fixaAlto(); ecra.h = alto; sujas = true; }
+    ecra.w = innerWidth;
+  }, { passive: true });
   addEventListener('load', remede);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(remede);
   if ('ResizeObserver' in window) new ResizeObserver(remede).observe(document.documentElement);
@@ -79,5 +102,5 @@ window.DA = (() => {
   addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
   addEventListener('beforeunload', () => scrollTo(0, 0));
   addEventListener('load', () => setTimeout(() => document.documentElement.classList.add('suave'), 400));
-  return { hashInicial, buscaInicial, $, $$, reduz, reduzSistema, clamp, vh, prog, aCada, aLer, caixa, remede, ecra, quieto, ocioso };
+  return { hashInicial, buscaInicial, $, $$, reduz, reduzSistema, clamp, vh, alto: () => alto, prog, aCada, aLer, caixa, remede, ecra, quieto, ocioso };
 })();

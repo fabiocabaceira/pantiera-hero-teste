@@ -8,7 +8,7 @@
     let ve = false, raf = 0, sx = 72, sy = 40;
     const passo = (now) => {
       raf = 0; if (!ve) return;
-      const r = sec.getBoundingClientRect(), p = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight + r.height)));
+      const r = sec.getBoundingClientRect(), vh = window.DA ? DA.ecra.h : innerHeight, p = Math.min(1, Math.max(0, (vh - r.top) / (vh + r.height)));
       const tx = reduz ? 60 : 50 + 22 * Math.sin(now / 2600), ty = 22 + 46 * p; // com «reduzir movimento» a luz só segue o scroll
       sx += (tx - sx) * 0.08; sy += (ty - sy) * 0.08;
       sec.style.setProperty('--lx', sx.toFixed(2) + '%'); sec.style.setProperty('--ly', sy.toFixed(2) + '%');
