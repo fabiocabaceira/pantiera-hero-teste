@@ -1,0 +1,97 @@
+/* 13/11 (João: «todos os reels possíveis, com o design e a UI do carrossel da Liz Salvados, adaptado à Pantiera,
+   com o vidro da Apple»). Os 18 reels oficiais do canal da Pantiera: o do centro grande e a tocar, os outros atrás,
+   mais pequenos e desfocados, de cada lado. Setas de vidro, contador, arrastar com o dedo, teclado, som por reel.
+   Só se pede o vídeo do centro e dos dois vizinhos; nada toca enquanto a secção não está à vista. */
+(() => {
+  const raiz = document.querySelector('[data-reels]'); if (!raiz) return;
+  const palco = raiz.querySelector('[data-reels-palco]');
+  const reais = JSON.parse(document.getElementById('reels-dados').textContent);
+  // com poucos reels, repetem-se para a pirâmide ficar igual dos dois lados (2 à esquerda, 2 à direita)
+  const dados = reais.length < 6 ? reais.concat(reais) : reais; const R = reais.length;
+  const num = raiz.querySelector('[data-reels-num]');
+  const N = dados.length;
+  const svgSom = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="m16 9.5 5 5m0-5-5 5"/></svg>';
+  const lis = dados.map((r, i) => {
+    const li = document.createElement('li');
+    li.className = 'reels-cartao';
+    li.innerHTML = `<video muted playsinline preload="none" poster="${r.src || 'media/reels/'}${r.id}.webp" data-src="${r.src || 'media/reels/'}${r.id}.mp4" width="540" height="960" aria-label="Reel: ${r.t.replace(/"/g, '&quot;')}"></video>
+      <button type="button" class="reels-som" aria-pressed="false" aria-label="Activar sonido">${svgSom}</button>
+      <a class="reels-titulo" href="${r.u}" target="_blank" rel="noopener">${r.t}</a>`;
+    li.addEventListener('click', (e) => { if (cur !== i && !e.target.closest('a')) { e.preventDefault(); vai(i); } });
+    li.querySelector('video').addEventListener('ended', () => { if (cur === i) vai(i + 1); }); // acaba um, entra o seguinte
+    palco.appendChild(li);
+    return li;
+  });
+  let cur = 0, dentro = false, comSom = -1;
+  // 13/11 (João: «com áudio e autoplay»): o reel do centro toca com som. Os browsers só deixam o som depois do primeiro
+  // gesto da pessoa na página; até lá toca mudo e o som entra sozinho no primeiro toque, scroll ou tecla.
+  let somLigado = true, gesto = false;
+  // (validação 13/11) o toque no botão do som não conta aqui: é o próprio botão que decide (ver em baixo)
+  const aoGesto = (e) => { if (e && e.target && e.target.closest && e.target.closest('.reels-som')) return; gesto = true; ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach((t) => removeEventListener(t, aoGesto, true)); pinta(); };
+  ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach((t) => addEventListener(t, aoGesto, { capture: true, passive: true }));
+  const pinta = () => {
+    const largo = innerWidth >= 900;
+    lis.forEach((li, i) => {
+      let d = i - cur; if (d > N / 2) d -= N; if (d < -N / 2) d += N; const a = Math.abs(d); // em roda: há sempre cartões dos dois lados
+      const x = d * (largo ? 46 : 34); // pirâmide: passo igual entre cartões // de um lado ao outro do ecrã
+      li.style.transform = `translate3d(${x}%,0,0) scale(${Math.max(0.6, 1 - a * 0.1)})`;
+      li.style.zIndex = String(50 - a);
+      const max = 2; li.style.opacity = a > max ? '0' : String(1 - a * 0.14);
+      li.style.filter = a ? `blur(${Math.min(10, a * 4)}px) saturate(.8)` : 'none';
+      li.style.pointerEvents = a > max ? 'none' : 'auto';
+      li.classList.toggle('frente', a === 0);
+      li.setAttribute('aria-hidden', a ? 'true' : 'false');
+      li.querySelectorAll('a,button').forEach((el) => (el.tabIndex = a ? -1 : 0));
+      const v = li.querySelector('video');
+      if (a <= 1 && !v.getAttribute('src')) v.src = v.dataset.src;
+      // (13/11) o do centro carrega já; os dois vizinhos pré-carregam o início para a troca de reel ser instantânea
+      if (a <= 1 && dentro) v.preload = a === 0 ? 'auto' : 'metadata';
+      if (a === 0 && dentro) { v.muted = !(somLigado && gesto); v.play().catch(() => { if (lis[cur] === li) { v.muted = true; v.play().catch(() => {}); } }); } else { v.pause(); v.muted = true; }
+      const b = li.querySelector('.reels-som'); const ouve = somLigado && gesto; b.setAttribute('aria-pressed', String(ouve)); b.setAttribute('aria-label', ouve ? 'Silenciar' : 'Activar sonido');
+    });
+    num.textContent = `${String((cur % R) + 1).padStart(2, '0')} / ${String(R).padStart(2, '0')}`;
+  };
+  const vai = (i) => { cur = (i + N) % N; pinta(); };
+  raiz.querySelector('[data-reels-ant]').addEventListener('click', () => vai(cur - 1));
+  raiz.querySelector('[data-reels-seg]').addEventListener('click', () => vai(cur + 1));
+  raiz.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') vai(cur - 1); if (e.key === 'ArrowRight') vai(cur + 1); });
+  palco.addEventListener('click', (e) => {
+    const b = e.target.closest('.reels-som'); if (!b) return;
+    // o botão mostra o que se ouve: se estava calado (mesmo antes do primeiro gesto), o toque liga o som
+    const ouvia = somLigado && gesto; somLigado = !ouvia; gesto = true; pinta();
+  });
+  // arrastar com o dedo ou o rato
+  let x0 = null;
+  palco.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') x0 = e.clientX; }, { passive: true });
+  addEventListener('pointerup', (e) => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 40) vai(cur + (dx < 0 ? 1 : -1)); }, { passive: true });
+  // 13/11 (João: «scroll com o dedo para o lado, no trackpad e no telefone»): o gesto horizontal do trackpad muda de reel
+  // (um de cada vez, com pausa), e no telefone o dedo para o lado também; o scroll vertical da página fica livre.
+  // Ouve-se no carrossel inteiro (.reels: cartões, vídeos, painel de vidro), não só no palco, para o gesto nunca cair
+  // num filho sem ouvinte. Só se trava o gesto quando é claramente horizontal; o vertical segue para a página.
+  let gestoTrav = false, acum = 0, tAcum = 0;
+  raiz.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) return; // pinça de zoom do trackpad
+    const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerWidth : 1;
+    const dx = e.deltaX * k, dy = e.deltaY * k;
+    if (Math.abs(dx) <= Math.abs(dy) * 1.1) return;
+    e.preventDefault(); // também trava o «voltar atrás» do Chrome/Safari com dois dedos
+    acum += dx;
+    // um gesto (com a inércia do trackpad) muda no máximo um reel: enquanto chegarem eventos, o bloqueio estica-se;
+    // só se solta depois de ~200 ms sem eventos horizontais.
+    if (gestoTrav) { acum = 0; }
+    else if (Math.abs(acum) > 28) { vai(cur + (acum > 0 ? 1 : -1)); acum = 0; gestoTrav = true; }
+    clearTimeout(tAcum); tAcum = setTimeout(() => { acum = 0; gestoTrav = false; }, 200);
+  }, { passive: false });
+  let t0 = null;
+  raiz.addEventListener('touchstart', (e) => { const t = e.touches[0]; t0 = { x: t.clientX, y: t.clientY }; }, { passive: true });
+  raiz.addEventListener('touchend', (e) => { if (!t0) return; const t = e.changedTouches[0]; const dx = t.clientX - t0.x, dy = t.clientY - t0.y; t0 = null; if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) vai(cur + (dx < 0 ? 1 : -1)); }, { passive: true });
+  new IntersectionObserver(([e]) => { dentro = e.isIntersecting; pinta(); }, { threshold: 0.3 }).observe(raiz);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) lis[cur].querySelector('video').pause(); else pinta(); });
+  addEventListener('resize', pinta);
+    // 13/11 (João: «só a voz de um reel de cada vez»): em toda a página, quando um vídeo começa a tocar com som,
+  // todos os outros com som param e calam-se. Nunca há duas vozes ao mesmo tempo.
+  const umaVoz = (e) => { const m = e.target; if (!(m instanceof HTMLMediaElement) || m.muted || m.paused) return;
+    document.querySelectorAll('video,audio').forEach((o) => { if (o !== m && !o.muted) { o.muted = true; if (!o.paused) o.pause(); } }); };
+  document.addEventListener('play', umaVoz, true); document.addEventListener('playing', umaVoz, true); document.addEventListener('volumechange', umaVoz, true);
+  pinta();
+})();

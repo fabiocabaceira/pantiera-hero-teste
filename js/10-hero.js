@@ -1,0 +1,171 @@
+(() => {
+  const { $, $$, reduz, clamp, vh } = DA;
+  /* ---------- HERO: o filme ---------- */
+  const hero = $('[data-hero]'), video = $('[data-hero-video]'), texto = $('[data-hero-texto]'), poster = $('[data-hero-poster]');
+  const hl0 = $('[data-hero-logo]');
+  // 13/11: sem zoom no cartaz (o João não quer zoom no hero); o cartaz desliza devagar de lado (estilo.css, .hero-poster)
+  const fimDoLogo = () => {};
+
+  /* ---------- 13/11: o filme oficial do Pantiera 32 (visto de cima, a abrir a esteira) ----------
+     Pedido só depois do load e da abertura, para não entrar na conta do LCP. Escolhe vertical ou horizontal
+     e o tamanho pelos píxeis reais do ecrã; pára fora do ecrã e com o separador escondido. */
+  if (video && !reduz) {
+    const escolhe = () => {
+      const vert = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
+      const lista = (vert ? video.dataset.v : video.dataset.h).split(',').map((s) => { const [u, w] = s.trim().split(' '); return { u, w: +w }; });
+      // 13/11 (João: «máximo 4K possível»): quase todos os píxeis reais do ecrã; a montagem nativa vai até 2560
+      const precisa = innerWidth * Math.min(devicePixelRatio || 1, 2) * (vert ? 0.66 : 0.9);
+      return (lista.find((o) => o.w >= precisa) || lista[lista.length - 1]).u;
+    };
+    let visivel = true;
+    // 13/11 (João: «impossível ver imagens paradas no hero»). O cartaz tem movimento próprio (CSS, desde a primeira
+    // pintura) e o filme só passa à frente quando está provado que anda (o tempo avançou duas vezes). Se encravar
+    // (rede lenta) ou parar, volta o cartaz em movimento até o filme andar outra vez. Assim nunca há imagem parada.
+    video.muted = true; video.defaultMuted = true; video.playsInline = true;
+    video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', '');
+    let tAnt = -1, avancos = 0, ultimoAvanco = 0, vivo = false;
+    const poeVivo = (v) => { if (v === vivo) return; vivo = v; video.classList.toggle('a-tocar', v); video.classList.toggle('cai', !v); hero.classList.toggle('vivo', v); };
+    video.addEventListener('timeupdate', () => {
+      const t = video.currentTime;
+      if (t !== tAnt) { if (t > tAnt || t < 0.3) avancos++; tAnt = t; ultimoAvanco = performance.now(); }
+      if (avancos >= 2 && !video.paused) poeVivo(true);
+    });
+    // (validação 13/11) um 'waiting' curto (a volta do filme no Android, micro-pausas) não pode trazer o cartaz de
+    // volta: isso fazia uma imagem dupla. Só a pausa a sério ou a vigia (sem avançar há mais de 600 ms) o fazem.
+    ['pause', 'emptied'].forEach((ev) => video.addEventListener(ev, () => { avancos = 0; poeVivo(false); }));
+    setInterval(() => { if (vivo && !video.seeking && performance.now() - ultimoAvanco > 600) { avancos = 0; poeVivo(false); } }, 200);
+    // modo de poupança de energia e browsers das apps: o filme só arranca com um gesto que conta para o sistema
+    // (o iOS só aceita touchend/click). Os ouvintes só saem quando o play resultar; se falhar, ficam à espera do próximo.
+    const GESTOS = ['touchend', 'pointerup', 'click', 'keydown'];
+    let armado = false;
+    const tira = () => { GESTOS.forEach((t) => removeEventListener(t, desbloqueio, true)); armado = false; };
+    const desbloqueio = () => { if (!video.getAttribute('src')) video.src = escolhe(); if (video.readyState === 0) video.load(); video.play().then(tira).catch(() => {}); };
+    const pedeGesto = () => { if (armado) return; armado = true; GESTOS.forEach((t) => addEventListener(t, desbloqueio, { capture: true, passive: true })); };
+    const toca = () => { if (visivel && !document.hidden) video.play().catch(pedeGesto); };
+    const arranca = () => {
+      video.src = escolhe();
+      toca();
+      new IntersectionObserver(([e]) => { visivel = e.isIntersecting; visivel ? toca() : video.pause(); }).observe(hero);
+      document.addEventListener('visibilitychange', () => (document.hidden ? video.pause() : toca()));
+    };
+    // 13/11: o slogan oficial («Salir, acelerar. Sentir, fondear, moverse y… volver a salir») acende cena a cena
+    const lema = $('[data-hero-lema]');
+    if (lema) {
+      const pals = [...lema.children]; let ativa = -1;
+      video.addEventListener('timeupdate', () => {
+        const t = video.currentTime; let i = 0;
+        pals.forEach((p, k) => { if (t >= +p.dataset.de) i = k; });
+        if (i !== ativa) { if (ativa >= 0) pals[ativa].classList.remove('on'); pals[i].classList.add('on'); ativa = i; }
+      });
+    }
+    // 13/11 (João: «o vídeo começa antes da abertura total do logótipo»): arranca no load, por baixo da abertura,
+    // para já estar a correr quando o logótipo voa para o cabeçalho; nunca antes do load, para não pesar no LCP
+    // 13/11 (porta de velocidade): espera também pelo primeiro LCP, para o filme não entrar na conta dele;
+    // o LCP chega por volta dos 2,5 s, antes do fim da abertura (~3,2 s), por isso o pedido do João mantém-se.
+    // 13/11 (auditoria do telemóvel): já não espera pelo load inteiro (em rede lenta chegava depois da abertura).
+    // Arranca depois do primeiro LCP ou, no máximo, 1,5 s depois do HTML. O cartaz em movimento cobre a espera.
+    let foi = false;
+    const vai = () => { if (!foi) { foi = true; arranca(); } };
+    const temLCP = (PerformanceObserver.supportedEntryTypes || []).includes('largest-contentful-paint');
+    if (temLCP) { try { new PerformanceObserver(() => vai()).observe({ type: 'largest-contentful-paint', buffered: true }); } catch (e) { vai(); } }
+    else vai();
+    setTimeout(vai, 1500);
+  }
+
+  /* ---------- abertura: a linha de água risca o ecrã, as letras emergem, o logótipo voa para o cabeçalho ---------- */
+  const hl = hl0, alvo = $('[data-logo-alvo]');
+  // outras secções podem adiar trabalho pesado até o logótipo pousar: DA.abertura.then(...) ou o evento 'da:aberto'
+  let acabou; DA.abertura = new Promise((r) => (acabou = r));
+  const avisa = () => { acabou(); document.dispatchEvent(new Event('da:aberto')); fimDoLogo(); };
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+  const quadros = (n) => new Promise((r) => { const f = () => (--n <= 0 ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); });
+  // todos os tempos saem do token --t-toque, os mesmos que o CSS usa
+  const T = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--t-toque')) || 200;
+  const RISCA = T * 6, VOO = T * 14, VOA = T * 6; // RISCA é a --t-cena da linha de água no CSS
+
+  const ab = $('[data-abertura]'), raiz = document.documentElement;
+  if (reduz || !ab) {
+    document.body.classList.remove('a-abrir'); hero.classList.add('pronto'); ab && ab.remove();
+    texto.classList.add('entra', 'vivo', 'assente'); avisa();
+  } else {
+    // abertura Pantiera: a linha vermelha desce do topo, abre-se em dois ramos e enche as duas ondas; as letras sobem; o logótipo voa para o cabeçalho
+    scrollTo(0, 0); hero.classList.add('pronto');
+    raiz.style.overflow = 'hidden';
+  const logo = $('[data-abertura-logo]'), svg = $('.logo', logo);
+  const ctm = svg.getScreenCTM();
+  const ecra = (x, y) => ({ x: ctm.a * x + ctm.c * y + ctm.e, y: ctm.b * x + ctm.d * y + ctm.f });
+  // centro do símbolo, para onde o escuro se recolhe
+  const sb = $('#simbolo', svg).getBBox();
+  const c = ecra(sb.x + sb.width * 0.5, sb.y + sb.height * 0.55);
+  document.body.style.setProperty('--ab-x', `${(c.x / innerWidth) * 100}%`);
+  document.body.style.setProperty('--ab-y', `${(c.y / innerHeight) * 100}%`);
+  // a linha: um tronco que desce do topo do ecrã à esquerda do símbolo e, a meia altura, abre-se em dois ramos;
+  // cada ramo entra na base da sua onda pela tangente do eixo e continua pelo eixo até à ponta
+  // abertura C+E: a grelha do ecrã inteiro aperta-se até à caixa do logótipo; círculos de traçado encaixam nas curvas
+  // do símbolo; as ondas desenham-se por cima; o nome sobe letra a letra; um fio vermelho fecha; o traçado apaga-se
+  const linhas = $('[data-linhas-svg]'), NS = 'http://www.w3.org/2000/svg', vw = innerWidth, vh = innerHeight;
+  linhas.setAttribute('viewBox', `0 0 ${vw} ${vh}`); linhas.innerHTML = '';
+  const BB = svg.getBoundingClientRect(), SB = $('#simbolo', svg).getBoundingClientRect();
+  const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x)), sg = (t, a, b) => cl((t - a) / (b - a));
+  const eo = (x) => 1 - Math.pow(1 - x, 3), eio = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const novo = (d, cor, w, extra) => { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.style.stroke = cor; p.style.strokeWidth = w + 'px'; p.setAttribute('pathLength', '1'); p.style.strokeDasharray = '1 1'; if (extra) p.setAttribute('stroke-linecap', extra); linhas.append(p); return p; };
+  // grelha: 9 verticais e 9 horizontais; cada uma guarda de onde parte (ecrã) e onde pousa (caixa do logótipo)
+  const gv = [], gh = []; // a grelha saiu: o dono escolheu só a construção (C)
+  // círculos de construção à volta do símbolo e uma cruz de eixos
+  const cx = SB.left + SB.width * 0.55, cy = SB.top + SB.height * 0.42, r = SB.width * 0.62;
+  const circ = (x, y, rr) => `M${x + rr} ${y} A${rr} ${rr} 0 1 1 ${x + rr - 0.01} ${y - 0.5}`;
+  const cs = [[cx, cy, r, '#9198a2'], [cx + r * 0.18, cy - r * 0.1, r * 0.62, '#9198a2'], [cx - r * 0.05, cy + r * 0.2, r * 1.05, '#9198a2'], [cx, cy, r * 1.62, '#dc0532']]
+    .map(([x, y, rr, cor]) => novo(circ(x, y, rr), cor, 1));
+  const eixoH = novo(`M${SB.left - 40} ${cy} L${BB.right + 40} ${cy}`, '#59606a', 1), eixoV = novo(`M${cx} ${SB.top - 60} L${cx} ${SB.bottom + 60}`, '#59606a', 1);
+  const mks = $$('.mk', svg), letrasA = $$('#palavra .letra', svg), yachts = $('#yachts', svg);
+  mks.forEach((m) => { m.style.animation = 'none'; m.style.strokeDasharray = '1 1'; m.style.strokeDashoffset = 1; });
+  letrasA.forEach((l) => { l.style.animation = 'none'; l.style.opacity = 0; });
+  if (yachts) yachts.style.opacity = 0;
+  const dash = (p, v, op) => { p.style.strokeDashoffset = 1 - v; p.style.opacity = op; };
+  const t0 = performance.now();
+  const quadro = (now) => {
+    const t = (now - t0) / 1000;
+    const og = 1 - sg(t, 1.9, 2.5);
+    cs.forEach((p, i) => dash(p, eio(sg(t, 0.05 + i * 0.14, 0.9 + i * 0.14)), 0.8 * og));
+    dash(eixoH, eio(sg(t, 0, 0.7)), 0.6 * og); dash(eixoV, eio(sg(t, 0.05, 0.75)), 0.6 * og);
+    mks.forEach((m) => { const menor = m.dataset.eixo === 'menor'; m.style.strokeDashoffset = 1 - eo(sg(t, menor ? 0.7 : 0.8, menor ? 1.4 : 1.5)); });
+    letrasA.forEach((l, i) => { const v = eo(sg(t, 1.25 + i * 0.045, 1.8 + i * 0.045)); l.style.opacity = v; l.style.clipPath = `inset(${((1 - v) * 100).toFixed(1)}% 0 0 0)`; l.style.transform = `translateY(${((1 - v) * 30).toFixed(1)}%)`; });
+    if (yachts) yachts.style.opacity = eo(sg(t, 2.05, 2.55));
+    if (t < 3.05) requestAnimationFrame(quadro);
+    else { letrasA.forEach((l) => { l.style.clipPath = ''; l.style.transform = ''; l.style.opacity = ''; }); if (yachts) yachts.style.opacity = ''; mks.forEach((m) => { m.style.strokeDashoffset = 0; }); }
+  };
+  requestAnimationFrame(quadro);
+    const al = $('svg', alvo);
+    setTimeout(() => {
+      const a = al.getBoundingClientRect(), b = logo.getBoundingClientRect();
+      logo.style.transition = 'transform .85s cubic-bezier(.7,0,.2,1)';
+      logo.style.transform = `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})`;
+      texto.classList.add('entra');
+    }, 3100);
+    setTimeout(() => { document.body.classList.remove('a-abrir'); ab.remove(); raiz.style.overflow = ''; texto.classList.add('vivo'); avisa(); setTimeout(() => texto.classList.add('assente'), 2200); }, 4000);
+  }
+
+  // o --q escreve-se só nas folhas que o usam (cartaz, filme, texto) e está registado sem herança (10-hero.css):
+  // mudar o valor não recalcula o estilo de nada por baixo. Onde o browser tem animation-timeline, o CSS anima
+  // o parallax no compositor (cola ao scroll do dedo) e aqui fica só o que é estado: fora e sobre-hero.
+  const folhas = [poster].filter(Boolean);
+  const peloCSS = !reduz && CSS.supports && CSS.supports('animation-timeline: scroll()');
+  let ultimo = -1, altHero = hero.offsetHeight, qAnt = '', qtAnt = '', foraAnt = null, sobreAnt = null;
+  addEventListener('resize', () => { altHero = hero.offsetHeight; ultimo = -1; }, { passive: true });
+  DA.aCada((t, ecra) => {
+    const y = ecra.y, h = ecra.h;
+    if (y === ultimo || y > h * 1.2 && ultimo > h * 1.2) { ultimo = y; return; }
+    ultimo = y;
+    const qt = clamp(y / (h * 0.7));
+    if (!peloCSS) {
+      const s = (reduz ? 0 : qt).toFixed(4), st = qt.toFixed(4);
+      if (s !== qAnt) { qAnt = s; folhas.forEach((f) => f.style.setProperty('--q', s)); }
+      if (st !== qtAnt) { qtAnt = st; texto.style.setProperty('--q', st); }
+    }
+    const fora = qt > 0.6;
+    if (fora !== foraAnt) { foraAnt = fora; texto.classList.toggle('fora', fora); }
+    // enquanto o hero está por baixo do cabeçalho, o cabeçalho não usa difference (ver 10-hero.css)
+    const sobre = y < altHero * 0.82;
+    if (sobre !== sobreAnt) { sobreAnt = sobre; document.body.classList.toggle('sobre-hero', sobre); }
+  });
+})();
