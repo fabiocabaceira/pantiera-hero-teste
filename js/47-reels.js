@@ -86,6 +86,9 @@
   raiz.addEventListener('touchstart', (e) => { const t = e.touches[0]; t0 = { x: t.clientX, y: t.clientY }; }, { passive: true });
   raiz.addEventListener('touchend', (e) => { if (!t0) return; const t = e.changedTouches[0]; const dx = t.clientX - t0.x, dy = t.clientY - t0.y; t0 = null; if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) vai(cur + (dx < 0 ? 1 : -1)); }, { passive: true });
   new IntersectionObserver(([e]) => { dentro = e.isIntersecting; pinta(); }, { threshold: 0.3 }).observe(raiz);
+  // 14/11 (iPhone em modo de poupança de energia): o iOS só deixa um vídeo tocar dentro de um toque. Cada toque com os
+  // reels à vista põe o do centro a andar, se o sistema o tiver parado.
+  addEventListener('touchend', () => { if (!dentro) return; const v = lis[cur].querySelector('video'); if (v.paused) { if (!v.getAttribute('src')) v.src = v.dataset.src; v.play().catch(() => {}); } }, { capture: true, passive: true });
   document.addEventListener('visibilitychange', () => { if (document.hidden) lis[cur].querySelector('video').pause(); else pinta(); });
   addEventListener('resize', pinta);
     // 13/11 (João: «só a voz de um reel de cada vez»): em toda a página, quando um vídeo começa a tocar com som,

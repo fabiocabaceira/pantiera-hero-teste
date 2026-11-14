@@ -2978,3 +2978,9 @@ html.com-camada .camada-3d{top:0}
   .taller-folha{display:none}
   .taller-rodape{border-radius:18px;clip-path:none;transform:none}
 }
+/* 14/11 (iPhone em modo de poupança de energia): as cenas do filme em fundidos quando o vídeo é proibido (js/10-hero.js) */
+.hero-pase,.hero-pase img{position:absolute;inset:0;width:100%;height:100%}
+.hero-pase img{object-fit:cover;object-position:50% 60%;opacity:0;transform:scale(1.06) translate3d(-1.4%,0,0);transition:opacity 1.2s ease}
+.hero-pase img.on{opacity:1;animation:hero-pase 3.6s linear both}
+@keyframes hero-pase{from{transform:scale(1.06) translate3d(-1.4%,0,0)}to{transform:scale(1.06) translate3d(1.4%,0,0)}}
+.hero.vivo .hero-pase{opacity:0;transition:opacity .5s}

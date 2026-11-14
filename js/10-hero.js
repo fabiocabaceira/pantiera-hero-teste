@@ -24,7 +24,22 @@
     video.muted = true; video.defaultMuted = true; video.playsInline = true;
     video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', '');
     let tAnt = -1, avancos = 0, ultimoAvanco = 0, vivo = false;
+    let pase = null, marca = null;
     const poeVivo = (v) => { if (v === vivo) return; vivo = v; video.classList.toggle('a-tocar', v); video.classList.toggle('cai', !v); hero.classList.toggle('vivo', v); };
+    /* 14/11 (João, iPhone em modo de poupança de energia: «nada está a funcionar»). Nesse modo o iOS proíbe qualquer
+       vídeo de tocar sozinho e o hero ficava parado no cartaz. Quando o play é recusado, o hero passa pelas cenas do
+       próprio filme (2 imagens por cena, tiradas do vídeo), em fundidos com um deslize lento, e o lema acende com elas.
+       As imagens só se pedem neste caso. Ao primeiro toque o filme arranca e passa à frente (classe .vivo). */
+    const iniciaPase = () => {
+      if (pase || vivo) return;
+      const vert = matchMedia('(max-width: 899px) and (orientation: portrait)').matches;
+      pase = document.createElement('div'); pase.className = 'hero-pase'; pase.setAttribute('aria-hidden', 'true');
+      const imgs = [0, 1, 2, 3, 4, 5].map((i) => { const im = new Image(); im.alt = ''; im.decoding = 'async'; im.src = `media/pase/${vert ? 'v' : 'h'}${i}.webp`; pase.appendChild(im); return im; });
+      video.before(pase);
+      let k = -1;
+      const passa = () => { if (vivo || document.hidden) return; k = (k + 1) % imgs.length; imgs.forEach((im, j) => im.classList.toggle('on', j === k)); if (marca) marca(Math.floor(k / 2)); };
+      (imgs[0].decode ? imgs[0].decode() : Promise.resolve()).catch(() => {}).then(() => { passa(); setInterval(passa, 2300); });
+    };
     video.addEventListener('timeupdate', () => {
       const t = video.currentTime;
       if (t !== tAnt) { if (t > tAnt || t < 0.3) avancos++; tAnt = t; ultimoAvanco = performance.now(); }
@@ -40,7 +55,7 @@
     let armado = false;
     const tira = () => { GESTOS.forEach((t) => removeEventListener(t, desbloqueio, true)); armado = false; };
     const desbloqueio = () => { if (!video.getAttribute('src')) video.src = escolhe(); if (video.readyState === 0) video.load(); video.play().then(tira).catch(() => {}); };
-    const pedeGesto = () => { if (armado) return; armado = true; GESTOS.forEach((t) => addEventListener(t, desbloqueio, { capture: true, passive: true })); };
+    const pedeGesto = () => { iniciaPase(); if (armado) return; armado = true; GESTOS.forEach((t) => addEventListener(t, desbloqueio, { capture: true, passive: true })); };
     const toca = () => { if (visivel && !document.hidden) video.play().catch(pedeGesto); };
     const arranca = () => {
       video.src = escolhe();
@@ -52,10 +67,11 @@
     const lema = $('[data-hero-lema]');
     if (lema) {
       const pals = [...lema.children]; let ativa = -1;
+      marca = (i) => { if (i !== ativa) { if (ativa >= 0) pals[ativa].classList.remove('on'); pals[i].classList.add('on'); ativa = i; } };
       video.addEventListener('timeupdate', () => {
         const t = video.currentTime; let i = 0;
         pals.forEach((p, k) => { if (t >= +p.dataset.de) i = k; });
-        if (i !== ativa) { if (ativa >= 0) pals[ativa].classList.remove('on'); pals[i].classList.add('on'); ativa = i; }
+        marca(i);
       });
     }
     // 13/11 (João: «o vídeo começa antes da abertura total do logótipo»): arranca no load, por baixo da abertura,
