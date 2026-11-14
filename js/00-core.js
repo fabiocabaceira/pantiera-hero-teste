@@ -2,7 +2,11 @@
 window.DA = (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const reduz = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 14/11 (João: «no meu telemóvel não tenho a abertura do logotipo, o hero não começa sozinho»). O iPhone dele tem
+  // «Reduzir movimento» ligado, e o site cortava a abertura e o filme. Regra 3c da casa: a preferência do sistema não
+  // corta a experiência; só o interruptor «Reducir movimiento» do rodapé (html.sem-mov) desliga o movimento.
+  const reduzSistema = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduz = document.documentElement.classList.contains('sem-mov');
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
   /* ---------- o estado do ecrã, lido uma vez por fotograma ----------
@@ -75,5 +79,5 @@ window.DA = (() => {
   addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
   addEventListener('beforeunload', () => scrollTo(0, 0));
   addEventListener('load', () => setTimeout(() => document.documentElement.classList.add('suave'), 400));
-  return { hashInicial, buscaInicial, $, $$, reduz, clamp, vh, prog, aCada, aLer, caixa, remede, ecra, quieto, ocioso };
+  return { hashInicial, buscaInicial, $, $$, reduz, reduzSistema, clamp, vh, prog, aCada, aLer, caixa, remede, ecra, quieto, ocioso };
 })();

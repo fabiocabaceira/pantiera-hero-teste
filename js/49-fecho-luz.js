@@ -1,7 +1,7 @@
 /* 13/11: luz vermelha que segue o rato no fundo do fecho; o barco balança um pouco quando o rato lhe passa por cima. */
 (() => {
   const sec = document.querySelector('.fecho'); if (!sec) return;
-  const foto = sec.querySelector('.fecho-foto'); const reduz = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const foto = sec.querySelector('.fecho-foto'); const reduz = document.documentElement.classList.contains('sem-mov');
   // 13/11 (João: «todas as animações também no telemóvel»): sem rato, a luz vermelha segue o scroll e passeia devagar
   // pela secção, e o barco balança com o movimento; só corre enquanto o fecho está no ecrã
   if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {

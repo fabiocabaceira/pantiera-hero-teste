@@ -20,7 +20,7 @@
   if ('ResizeObserver' in window && banda) new ResizeObserver(acerta).observe(banda);
 
   // a pintura: a camada nova entra por uma cortina da popa para a proa, com a luz vermelha à frente
-  const calmo = matchMedia('(prefers-reduced-motion: reduce)'), toque = matchMedia('(hover: none)');
+  const calmo = { matches: document.documentElement.classList.contains('sem-mov') }, toque = matchMedia('(hover: none)');
   let i = 0, ocupado = false;
   const cor = (k) => getComputedStyle(cores[k]).getPropertyValue('--c').trim();
   const marca = () => cores.forEach((c, k) => c.classList.toggle('on', k === i));

@@ -1,3 +1,6 @@
+/* 14/11 (regra 3c, João): «Reduzir movimento» do sistema já não corta animações neste site (o iPhone do João tem-no
+   ligado e ficava sem abertura nem filme). As regras de movimento reduzido ficam guardadas com (min-width:99999px) e
+   o corte total vive em html.sem-mov, o interruptor do rodapé. */
 /* css/00-base.css */
 /* De Antonio Yachts: a travessia. Uma letra (Archivo, eixo de largura), mar fundo, espuma e teca. */
 @font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-stretch:62% 125%;font-display:swap;src:url(fonts/archivo.woff2) format('woff2')}
@@ -145,7 +148,7 @@ body.menu-aberto .topo::before{opacity:0}
   .barra-contacto{left:14px;right:14px;justify-content:space-between}
   .barra-cta{flex:1}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   *,*::before,*::after{animation-duration:1ms!important;animation-delay:0s!important;transition-duration:1ms!important;transition-delay:0s!important}
   body.a-abrir .topo-logo{opacity:1}
   .duas-tintas .p{color:var(--espuma)}
@@ -181,7 +184,7 @@ body.a-abrir .hero:not(.pronto) .hero-moldura{opacity:0}
 .hero-poster img,.hero-video{transform:translate3d(0,calc(var(--q,0)*12vh),0);will-change:transform}
 /* onde há animation-timeline o parallax corre no compositor, colado ao scroll do dedo, sem esperar pela thread principal */
 @supports (animation-timeline:scroll()){
-  @media (prefers-reduced-motion:no-preference){
+  @media all{
     .hero-poster img,.hero-video{animation:hero-q linear both;animation-timeline:scroll(root block);animation-range:0px 70vh}
   }
 }
@@ -260,7 +263,7 @@ body.sobre-hero .topo{mix-blend-mode:normal}
   .hero.camara-m{--cy:var(--cy-m,-18%);--cs:var(--cs-m,1.35)}
   .hero.camara-m .hero-camara{transition:none}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .hero-logo{display:none}
   .hero-titulo .linha,.hero-acoes{opacity:1;transform:none;filter:none}
   body.a-abrir .hero:not(.pronto) .hero-moldura{opacity:1}
@@ -445,7 +448,7 @@ body.a-abrir .hero-sombra,.hero.sombra .hero-sombra{opacity:0}
 .prancha-foto img{width:100%;height:100%;object-fit:cover;object-position:50% 62%;display:block;transition:scale var(--t-entra) var(--curva)}
 .prancha-foto:hover img{scale:1.05}
 .prancha-foto figcaption{position:absolute;inset:auto 0 0 0;padding:40px 14px 12px;font-size:.6875rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--espuma);background:linear-gradient(180deg,rgba(11,12,13,0),rgba(11,12,13,.75))}
-@media (prefers-reduced-motion:no-preference){@supports (animation-timeline:view()){
+@media all{@supports (animation-timeline:view()){
   .prancha-tinta{-webkit-mask-image:url(img/linhas-popa-1400.webp),linear-gradient(100deg,#000 40%,transparent 60%);mask-image:url(img/linhas-popa-1400.webp),linear-gradient(100deg,#000 40%,transparent 60%);-webkit-mask-size:100% auto,300% 100%;mask-size:100% auto,300% 100%;-webkit-mask-position:0 100%,100% 0;mask-position:0 100%,100% 0;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-composite:source-in;mask-composite:intersect;animation:prancha-desenha linear both;animation-timeline:view();animation-range:entry 0% cover 55%}
   .prancha-foto{animation:prancha-pousa linear both;animation-timeline:view();animation-range:entry 20% cover 50%}
 }}
@@ -472,7 +475,7 @@ body.a-abrir .hero-sombra,.hero.sombra .hero-sombra{opacity:0}
   .ganhos li:last-child{border-bottom:1px solid rgba(11,12,13,.14)}
   .ganhos b{margin:0;font-size:.8125rem}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .mapa-rotas path{stroke-dashoffset:0}.mapa-dealers circle,.mapa-bcn{opacity:1}
 }
 
@@ -741,7 +744,7 @@ body.a-abrir .hero-sombra,.hero.sombra .hero-sombra{opacity:0}
 @media (max-width:900px) and (max-height:700px){
   .foto{aspect-ratio:1/1;max-height:62svh}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .porto-ponto::after{animation:none}
   .quadro img{transform:none}
   .marca.espera{opacity:1}
@@ -935,7 +938,7 @@ body.a-abrir .hero-sombra,.hero.sombra .hero-sombra{opacity:0}
   .ecra .faixa-seta:active:not(:disabled){transform:scale(.92)}
   .ecra-conta{bottom:calc(32px + env(safe-area-inset-bottom))}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .d60-l,.d60-marca::after,.d60-titulo .linha>span,.d60-fio,.d60-partes li::after,.d60-pinos button::before{transform:none;transition:none}
   .d60-pinos button::after{transform:translateX(3.5px);transition:none}
 }
@@ -956,7 +959,7 @@ body.a-abrir .hero-sombra,.hero.sombra .hero-sombra{opacity:0}
   .d60-mini-x{position:absolute;top:6px;right:6px;width:36px;height:36px;border:0;border-radius:50%;background:none;color:var(--espuma-2);font-size:1.25rem;line-height:1;cursor:pointer}
 }
 @keyframes d60-mini{from{transform:translateY(6px) scale(.96)}}
-@media (prefers-reduced-motion:reduce){.d60-mini{animation:none}}
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){.d60-mini{animation:none}}
 
 /* telemóvel (13/11): os quatro números numa só fila, mais pequenos */
 @media (max-width:900px){
@@ -1057,7 +1060,7 @@ body.a-abrir .hero-sombra,.hero.sombra .hero-sombra{opacity:0}
 }
 
 /* entradas: só com movimento; com movimento reduzido tudo fica no estado final */
-@media (prefers-reduced-motion:no-preference){
+@media all{
   .pr-num text{stroke-dasharray:2400;stroke-dashoffset:2400;transition:stroke-dashoffset var(--t-cena) var(--curva),fill var(--t-cena) var(--curva) var(--t-cena)}
   .pr-trofeu.dentro .pr-num text{stroke-dashoffset:0;fill:rgba(198,204,211,.08)}
   .pr-foto{clip-path:inset(0 0 0 100% round 20px);transition:clip-path var(--t-cena) var(--curva) var(--t-toque)}
@@ -1074,7 +1077,7 @@ body.a-abrir .hero-sombra,.hero.sombra .hero-sombra{opacity:0}
   .pr-honra{opacity:0;transform:translateY(16px);transition:opacity var(--t-entra) var(--curva),transform var(--t-entra) var(--curva)}
   .pr-parede.dentro .pr-honra{opacity:1;transform:none;transition-delay:calc(var(--t-toque) * .25 * var(--i))}
 }
-@media (prefers-reduced-motion:no-preference) and (max-width:900px){
+@media (max-width:900px){
   .pr-foto{clip-path:inset(0 0 0 100%)}
   .pr-trofeu+.pr-trofeu .pr-foto{clip-path:inset(0 100% 0 0)}
   .pr-trofeu.dentro .pr-foto{clip-path:inset(0 0 0 0)}
@@ -1090,7 +1093,7 @@ body.a-abrir .hero-sombra,.hero.sombra .hero-sombra{opacity:0}
   .pr-honra:hover .pr-selo img{transform:scale(1.06)}
   .pr-honra:hover .pr-honra-ano i{color:var(--teca-2);transform:translateX(4px)}
 }
-@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+@media (hover:hover) and (pointer:fine){
   .pr-trofeu.dentro:hover .pr-foto img{transform:scale(1.035);transition-duration:var(--t-cena);transition-delay:0s}
   .pr-trofeu.dentro:hover .pr-selo-g{transform:translateY(-4px);transition-delay:0s}
 }
@@ -1167,7 +1170,7 @@ select option{color:#111}
   .mapa.tem-escolha .mapa-rotas path.escolhida{stroke-width:5.5}
   .mapa-nomes text{font-size:28px}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .aventura-moldura video{transform:none}
   .mapa-rotas path{stroke-dashoffset:0}
   .mapa-dealers circle,.mapa-bcn,.mapa-nomes text{opacity:1}
@@ -1351,7 +1354,7 @@ select option{color:#111}
 }
 @keyframes dl-corre-m{from{stroke-dashoffset:0}to{stroke-dashoffset:-21}}
 html.dl-trava,html.dl-trava body{overflow:hidden}
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .dl-arco,.dl-pin-casa::before{animation:none}
   .dl-fluxo{display:none}
   .dl-lienzo,.dl-ficha,.dl-previa{transition:none}
@@ -1664,7 +1667,7 @@ html.sem-mov .dl-fluxo{display:none}
   .percurso-barco{width:48px}
   .ancora .placa{margin:-64px 10px 0;padding:18px 18px 12px}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .passo.entra-d,.passo.entra-e,.obrigado,.dealer-p.entra,.placa dd.muda,.placa-slot .placa{animation:none}
 }
 
@@ -2057,7 +2060,7 @@ body.mp-sem-barra .barra-contacto{opacity:0!important;pointer-events:none!import
   .mp-painel{align-content:start}
   .mp-fecho{margin-top:160px}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .mp-heroi-foto img{animation:none;transform:none}
   .mp-cota-l,.mp-ga .mp-cota-l,.mp-tanque-b,.mp-escala-l,.mp-pino::before,.mp-pino::after{transform:none!important;transition:none}
   .mp-mini,.mp-grupo.activo{animation:none}
@@ -2206,7 +2209,7 @@ html.com-camada{overflow:hidden}
 .camada-fecha span:first-child{transform:rotate(45deg)}
 .camada-fecha span:last-child{transform:rotate(-45deg)}
 
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .camada-3d{transform:none}
 }
 
@@ -2310,7 +2313,7 @@ html.com-camada{overflow:hidden}
 }
 @media (prefers-reduced-transparency:reduce){.vida-vidro{background:rgba(22,24,27,.94);-webkit-backdrop-filter:none;backdrop-filter:none}}
 @media (prefers-contrast:more){.vida-vidro{background:rgba(11,12,13,.96);box-shadow:inset 0 0 0 1px var(--espuma)}}
-@media (prefers-reduced-motion:reduce){.vida.troca .vida-nome,.vida.troca .vida-linha,.vida.troca .vida-n{animation-duration:.2s;filter:none}}
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){.vida.troca .vida-nome,.vida.troca .vida-linha,.vida.troca .vida-n{animation-duration:.2s;filter:none}}
 
 /* 13/11: faixa dos salões no rodapé (factos: página de expositor do Valencia Boat Show e o filme do Salón de Barcelona) */
 .rodape-feiras{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));align-items:stretch;gap:12px;margin:22px 0 4px;padding-top:20px;border-top:1px solid rgba(244,244,242,.1)}
@@ -2333,7 +2336,7 @@ html.com-camada{overflow:hidden}
 .hero-lema span.on{opacity:1;filter:none;transform:none;letter-spacing:.24em}
 .hero-lema span::after{content:"";display:block;height:1px;margin-top:8px;background:var(--teca);transform:scaleX(0);transform-origin:0 50%;transition:transform 1.2s var(--curva) .15s}
 .hero-lema span.on::after{transform:scaleX(.4)}
-@media (prefers-reduced-motion:reduce){.hero-lema span{filter:none;transform:none;letter-spacing:.24em}}
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){.hero-lema span{filter:none;transform:none;letter-spacing:.24em}}
 /* a faixa dos salões ocupa a largura toda, entre os contactos e a linha legal */
 .rodape-in{grid-template-areas:"contacto redes" "feiras feiras" "fim fim"}
 .rodape-feiras{grid-area:feiras;margin:4px 0 0}
@@ -2369,7 +2372,7 @@ html.com-camada{overflow:hidden}
 .filme-prog i{display:block;height:100%;background:var(--espuma);transform:scaleX(0);transform-origin:0 50%}
 .filme-nota{margin:14px auto 0;width:min(100%,calc(86svh * 16 / 9));font-size:.75rem;color:var(--nevoa)}
 @supports (animation-timeline:view()){
-  @media (prefers-reduced-motion:no-preference){
+  @media all{
     .filme-moldura{animation:filme-cresce linear both;animation-timeline:view();animation-range:entry 0% cover 45%}
   }
 }
@@ -2477,7 +2480,7 @@ body.cfg-vista .barra-contacto{opacity:0;pointer-events:none;transform:translate
 .cfg-tel-cores i{width:24px;height:24px;border-radius:50%;background:var(--c);box-shadow:inset 0 -6px 10px rgb(0 0 0 / .25),0 0 0 1px rgb(255 255 255 / .2)}
 .cfg-tel-cores i:first-child{box-shadow:0 0 0 2px #0d0e10,0 0 0 3.5px var(--espuma)}
 .cfg-tel-btn{display:block;padding:11px;border-radius:999px;background:var(--espuma);color:#0b0c0d;text-align:center;font-size:.75rem;font-weight:500}
-@media (prefers-reduced-motion:reduce){.cfg-tel-f,.cfg-tel-amb em{animation:none}.cfg-tel-f.f2,.cfg-tel-f.f3,.cfg-tel-amb .a2,.cfg-tel-amb .a3{opacity:0}}
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){.cfg-tel-f,.cfg-tel-amb em{animation:none}.cfg-tel-f.f2,.cfg-tel-f.f3,.cfg-tel-amb .a2,.cfg-tel-amb .a3{opacity:0}}
 @media (max-width:900px){
   .cfg-convite{grid-template-columns:1fr;padding:64px var(--g) 72px}
   .cfg-convite-n{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -2523,7 +2526,7 @@ body.cfg-vista .barra-contacto{opacity:0;pointer-events:none;transform:translate
   .reels-ant{left:4px}.reels-seg{right:4px}
   .reels-base{padding:0 4px}
 }
-@media (prefers-reduced-motion:reduce){.reels-cartao{transition:none}}
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){.reels-cartao{transition:none}}
 
 /* 13/11 (João: «apaga o texto, reutiliza o fundo desta secção e põe só o carrossel de reels, de um lado ao outro,
    centrado, nem muito grande nem muito pequeno, com o painel em vidro transparente»). */
@@ -2682,7 +2685,7 @@ h2.cap-t{font-size:clamp(2.6rem,5vw,4.6rem)}
 .fecho::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(520px circle at var(--lx) var(--ly),rgb(220 5 50 / .22),rgb(220 5 50 / .08) 40%,transparent 70%);transition:opacity .6s}
 .fecho-foto img{transition:transform .9s var(--curva);transform:translate3d(var(--bx,0px),var(--by,0px),0) rotate(var(--br,0deg))}
-@media (prefers-reduced-motion:reduce){.fecho-foto img{transition:none;transform:none}}
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){.fecho-foto img{transition:none;transform:none}}
 .reels-palco,.so-reels .reels{touch-action:pan-y;overscroll-behavior-x:contain}
 
 /* 13/11 «Agenda tu visita» em vidro Apple (João: «monta melhor a informação, letras sem falhas, vidro, janelas»).
@@ -2724,7 +2727,7 @@ h2.cap-t{font-size:clamp(2.6rem,5vw,4.6rem)}
 .banda-cfg-btn:hover{box-shadow:0 24px 60px -16px rgb(220 5 50 / .75),0 0 0 8px rgb(244 244 242 / .1)}
 .banda-cfg-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgb(255 255 255 / .9) 48%,transparent 66%);transform:translateX(-120%);animation:banda-luz 3.6s ease-in-out 2s infinite}
 @keyframes banda-luz{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
-@media (prefers-reduced-motion:reduce){.banda-cfg-btn::after{animation:none}.banda-cfg-linha,.banda-cfg-k,.banda-cfg-btn{transition:none}}
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){.banda-cfg-btn::after{animation:none}.banda-cfg-linha,.banda-cfg-k,.banda-cfg-btn{transition:none}}
 @media (max-width:899px){.banda-cfg{min-height:52svh;padding:10svh 16px 12svh}.banda-cfg-btn{min-height:56px;padding:0 24px}}
 
 /* 13/11 «pausas»: reels e botão do configurador num só palco preso (js/51-pausas.js). A secção mede
@@ -2794,7 +2797,7 @@ html.com-camada .camada-3d{top:0}
 .camada-carrega i{display:block;width:min(240px,50vw);height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,#e3002b 45%,#ff5a6e 50%,#e3002b 55%,transparent) 0 0/40% 100% no-repeat,rgba(244,244,242,.1);animation:camada-luz 1.4s cubic-bezier(.65,0,.35,1) infinite}
 .camada-3d.carregou .camada-carrega{opacity:0}
 @keyframes camada-luz{from{background-position:-60% 0,0 0}to{background-position:160% 0,0 0}}
-@media (prefers-reduced-motion:reduce){.camada-carrega i{animation:none;background-position:50% 0,0 0}}
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){.camada-carrega i{animation:none;background-position:50% 0,0 0}}
 /* o fechar fica por baixo da barra de cima do configurador oficial: no canto estava a tapar o símbolo do logótipo deles */
 .camada-fecha,.cfg-moldura.cheio .cfg-fecha{top:calc(env(safe-area-inset-top) + 72px);left:16px}
 
@@ -2959,7 +2962,7 @@ html.com-camada .camada-3d{top:0}
   .taller-ferr{top:10px;right:10px}
   .taller-canto{width:12px;height:12px}
 }
-@media (prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce) and (min-width:99999px){
   .taller-folha,.taller-ferr{transition:none}
   .taller-ponto::after,.taller-anel{animation:none}
 }

@@ -34,7 +34,7 @@
   const CH = 'pt-mov', bt = $('[data-mov]');
   if (bt) {
     const meu = document.documentElement.classList.contains('sem-mov');
-    const doSistema = !meu && reduz;
+    const doSistema = false; // (14/11) a preferência do sistema já não desliga o movimento: o interruptor só mostra a escolha feita aqui
     bt.setAttribute('aria-checked', String(meu || doSistema));
     // quando é o sistema a pedir menos movimento, o interruptor mostra-o e não o contraria
     if (doSistema) { bt.disabled = true; bt.title = 'Activado en los ajustes de tu dispositivo'; }
