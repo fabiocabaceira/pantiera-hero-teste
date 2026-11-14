@@ -14,8 +14,9 @@
   // em «ecrãs»: pausa nos reels, subida, pausa no botão (a altura da secção no CSS é 1 + a soma destes)
   const PAUSA_REELS = 0.6, SUBIDA = 0.55, PAUSA_BOTAO = 0.9;
   const suave = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-  // a construção do botão: de 40 % da subida até 12 % da pausa no botão
-  const C0 = PAUSA_REELS + SUBIDA * 0.4, C1 = PAUSA_REELS + SUBIDA + PAUSA_BOTAO * 0.12;
+  // a construção do botão: de 30 % a 92 % da subida, inteira antes de a banda parar
+  // (verificação 14/11: a banda pára a 1,13 ecrãs; o botão tem de estar inteiro antes disso)
+  const C0 = PAUSA_REELS + SUBIDA * 0.3, C1 = PAUSA_REELS + SUBIDA * 0.92;
   const fase = (c, a, b) => { const t = Math.min(1, Math.max(0, (c - a) / (b - a))); return (t * t * (3 - 2 * t)).toFixed(4); };
   const semMov = document.documentElement.classList.contains('sem-mov');
   let pedido = 0, H = 0, bh = 0;

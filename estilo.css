@@ -2972,3 +2972,9 @@ html.com-camada .camada-3d{top:0}
   transform-origin:top;transform:scaleY(var(--fl,0));opacity:calc(1 - var(--f,0))}
 /* (iPhone 14/11) a costura entre a banda e o palco do barco: o trilho sobe em meio píxel e deixava ver 1 px do papel */
 .so-reels .banda-cfg{box-shadow:0 3px 0 #000}
+/* (verificação 14/11) telemóvel deitado: a folha encolhia até 131 px e o nome cortava. Fica só a placa, larga e legível. */
+@media (max-height:500px) and (orientation:landscape){
+  .taller{--tw:min(380px,calc(100vw - 32px))}
+  .taller-folha{display:none}
+  .taller-rodape{border-radius:18px;clip-path:none;transform:none}
+}

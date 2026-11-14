@@ -37,7 +37,7 @@
      só a última imagem, parada. */
   const filme = (() => {
     const ctx = tela.getContext('2d', { alpha: false });
-    const n = +tela.dataset.n || 101, JANELA = 10, AMORTECE = 0.085;
+    const n = +tela.dataset.n || 101, JANELA = 10, AMORTECE = 0.14;
     let pasta = '', blobs = [], bms = new Map(), aCaminho = new Set();
     let alvo = semMov ? n - 1 : 0, agora = alvo, rodando = false, t0 = 0, desenhado = '', ouvinte = null;
     const url = (i) => pasta + String(i).padStart(4, '0') + '.webp';
@@ -157,12 +157,14 @@
     const q = -r.top / vh;
     // a proa entra no ecrã com o palco a 93 %: o barco acende-se aí e a luz corre até à popa com o palco no topo
     raiz.style.setProperty('--fl', lin(-1, -0.82, q).toFixed(4));
-    const fp = lin(-0.93, 0, q);
+    // (verificação 14/11) as 3 primeiras imagens são pretas: começa na 3; e acaba com o palco a 15 % do topo, para o
+    // título entrar ainda com o palco à vista a quem desce a ritmo normal
+    const fp = 0.03 + 0.97 * lin(-0.93, -0.15, q);
     if (r.top < vh && r.bottom > 0) filme.vai(fp); else filme.salta(fp);
   };
   // o título entra quando o filme chega à última imagem e pára (fluidez, 14/11: o vidro desfocado do título por cima de
   // um canvas ainda a desenhar dava até 11 % de imagens lentas no telemóvel lento); sai se se voltar para cima
-  filme.ouve((k) => { if (curto.matches) raiz.classList.toggle('cap-curto-fim', k >= 0.995); });
+  filme.ouve((k) => { if (curto.matches) raiz.classList.toggle('cap-curto-fim', k >= 0.985); });
   if (semMov) raiz.classList.add('cap-curto-fim');
   const modoCurto = () => {
     raiz.classList.toggle('cap-curto', curto.matches);
