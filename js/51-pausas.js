@@ -33,7 +33,8 @@
     const c = semMov ? 1 : (y - C0) / (C1 - C0);
     const st = banda.style;
     st.setProperty('--cl', fase(c, 0, 0.3)); st.setProperty('--cf', fase(c, 0.25, 0.6));
-    st.setProperty('--cb', fase(c, 0.42, 0.82)); st.setProperty('--cp', fase(c, 0.5, 0.85)); st.setProperty('--cd', fase(c, 0.72, 1));
+    // (iPhone 14/11) o barco aparece com a folha: com o scroll parado a meio, a folha nunca fica branca
+    st.setProperty('--cb', fase(c, 0.22, 0.55)); st.setProperty('--cp', fase(c, 0.5, 0.85)); st.setProperty('--cd', fase(c, 0.72, 1));
     banda.classList.toggle('vista', c > 0);
     banda.classList.toggle('pronta', c >= 1);
     // durante a pausa, a linha continua por baixo da placa até ao fundo da banda (e daí até à proa, js/48-capitulos.js)
