@@ -2984,3 +2984,9 @@ html.com-camada .camada-3d{top:0}
 .hero-pase img.on{opacity:1;animation:hero-pase 3.6s linear both}
 @keyframes hero-pase{from{transform:scale(1.06) translate3d(-1.4%,0,0)}to{transform:scale(1.06) translate3d(1.4%,0,0)}}
 .hero.vivo .hero-pase{opacity:0;transition:opacity .5s}
+/* 14/11 (João, iPhone: «o hero está a travar, a mexer de um lado para o outro»). Com o modo de poupança o iOS baixa as
+   imagens por segundo e o deslize lateral do cartaz e das cenas tremia. Sai todo o deslize: o cartaz fica quieto e as
+   cenas trocam só por fundidos longos (a opacidade não treme a 30 imagens por segundo). */
+.hero-poster,.hero.vivo .hero-poster{animation:none!important;translate:none!important;transform:none!important;inset:0!important;height:100%!important;width:100%!important}
+.hero-pase img,.hero-pase img.on{animation:none!important;transform:none!important}
+.hero-pase img{transition:opacity 1.6s ease-in-out}

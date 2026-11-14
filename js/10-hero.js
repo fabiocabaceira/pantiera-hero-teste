@@ -38,7 +38,7 @@
       video.before(pase);
       let k = -1;
       const passa = () => { if (vivo || document.hidden) return; k = (k + 1) % imgs.length; imgs.forEach((im, j) => im.classList.toggle('on', j === k)); if (marca) marca(Math.floor(k / 2)); };
-      (imgs[0].decode ? imgs[0].decode() : Promise.resolve()).catch(() => {}).then(() => { passa(); setInterval(passa, 2300); });
+      (imgs[0].decode ? imgs[0].decode() : Promise.resolve()).catch(() => {}).then(() => { passa(); setInterval(passa, 2800); });
     };
     video.addEventListener('timeupdate', () => {
       const t = video.currentTime;
