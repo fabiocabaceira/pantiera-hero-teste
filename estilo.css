@@ -2994,3 +2994,11 @@ html.com-camada .camada-3d{top:0}
 .hero-pase-tela{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 60%;opacity:0;transition:opacity .6s ease}
 .hero-pase.on .hero-pase-tela{opacity:1}
 .hero-pase.fora{opacity:0;transition:opacity .5s}
+/* 14/11 (João: «na versão mobile tira todos os stops do scroll»): no telemóvel os reels e o botão do configurador
+   seguem no fluxo normal da página, sem palco preso nem pausas (js/51-pausas.js) */
+@media (max-width:899px){
+  .so-reels{height:auto!important}
+  .reels-pin{position:relative;top:auto;height:auto;overflow:visible}
+  .reels-trilho{transform:none!important;will-change:auto}
+  .so-reels .prancha{height:auto;min-height:0;padding-top:96px;padding-bottom:40px}
+}

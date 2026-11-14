@@ -19,18 +19,23 @@
   const C0 = PAUSA_REELS + SUBIDA * 0.3, C1 = PAUSA_REELS + SUBIDA * 0.92;
   const fase = (c, a, b) => { const t = Math.min(1, Math.max(0, (c - a) / (b - a))); return (t * t * (3 - 2 * t)).toFixed(4); };
   const semMov = document.documentElement.classList.contains('sem-mov');
+  const movel = matchMedia('(max-width: 899px)');
   let pedido = 0, H = 0, bh = 0;
   const mede = () => { H = pin.clientHeight; bh = banda.offsetHeight; };
   const pinta = () => {
     pedido = 0; if (!H) mede();
     const y = -sec.getBoundingClientRect().top / H; // ecrãs andados desde que o palco prendeu
-    const k = suave(PAUSA_REELS, PAUSA_REELS + SUBIDA, y);
-    trilho.style.transform = `translate3d(0,${(-k * bh).toFixed(1)}px,0)`;
+    // 14/11 (João: «na versão mobile tira todos os stops do scroll»): no telemóvel não há palco preso; a banda vem a
+    // seguir aos reels no fluxo normal e a construção do botão segue a posição dela no ecrã
+    const solto = movel.matches;
+    const k = solto ? 0 : suave(PAUSA_REELS, PAUSA_REELS + SUBIDA, y);
+    trilho.style.transform = solto ? '' : `translate3d(0,${(-k * bh).toFixed(1)}px,0)`;
+    const bt = solto ? banda.getBoundingClientRect().top / innerHeight : 0;
     // 14/11 (João: «o botão não está a aparecer a tempo»). Medido frame a frame: a entrada corria por relógio, com
     // atrasos até 2,5 s, e ao chegar à pausa o botão ainda estava invisível (69 % das imagens com ele incompleto).
     // Agora anda com o scroll: a linha desce, a folha abre do centro, o barco ganha nitidez, a placa entra e por fim a
     // chave, os pontos e as cores, tudo enquanto a banda sobe; fica inteiro logo no início da pausa, nos dois sentidos.
-    const c = semMov ? 1 : (y - C0) / (C1 - C0);
+    const c = semMov ? 1 : solto ? (0.98 - bt) / 0.5 : (y - C0) / (C1 - C0);
     const st = banda.style;
     st.setProperty('--cl', fase(c, 0, 0.3)); st.setProperty('--cf', fase(c, 0.25, 0.6));
     // (iPhone 14/11) o barco aparece com a folha: com o scroll parado a meio, a folha nunca fica branca
@@ -38,7 +43,7 @@
     banda.classList.toggle('vista', c > 0);
     banda.classList.toggle('pronta', c >= 1);
     // durante a pausa, a linha continua por baixo da placa até ao fundo da banda (e daí até à proa, js/48-capitulos.js)
-    const sv = semMov ? 1 : suave(C1, PAUSA_REELS + SUBIDA + PAUSA_BOTAO * 0.85, y);
+    const sv = semMov ? 1 : solto ? suave(0.5, 0.1, bt) : suave(C1, PAUSA_REELS + SUBIDA + PAUSA_BOTAO * 0.85, y);
     st.setProperty('--s', sv.toFixed(4));
     if (pct) pct.textContent = String(Math.round(sv * 100)).padStart(3, '0');
   };
