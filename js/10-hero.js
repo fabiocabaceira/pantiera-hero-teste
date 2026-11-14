@@ -131,9 +131,9 @@
     if (temLCP) { try { new PerformanceObserver(() => vai()).observe({ type: 'largest-contentful-paint', buffered: true }); } catch (e) { vai(); } }
     else vai();
     // 14/11 (porta de velocidade no ar: telemóvel 88, LCP 3,6 s): o relógio de 0,7 s pedia o filme antes do LCP
-    // (1,2 s contra 1,6 s) e o filme roubava a rede ao primeiro ecrã. Onde há LCP (Chrome) espera por ele, com 2 s de
+    // (1,2 s contra 1,6 s) e o filme roubava a rede ao primeiro ecrã. Onde há LCP (Chrome) espera por ele, com 3 s de
     // teto; o Safari do iPhone não tem LCP e pede logo, como antes. A abertura dura pelo menos 3,1 s: o filme chega a tempo.
-    setTimeout(vai, temLCP ? 2000 : 0);
+    setTimeout(vai, temLCP ? 3000 : 0);
   }
 
   /* ---------- abertura: a linha de água risca o ecrã, as letras emergem, o logótipo voa para o cabeçalho ---------- */
