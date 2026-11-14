@@ -2931,7 +2931,7 @@ html.com-camada .camada-3d{top:0}
   /* sem opacidade no texto (livro das falhas: contraste falso a meio de um fundido): a placa desce de trás da folha */
   clip-path:inset(0 0 calc(100% - 100% * var(--cp,0)) 0 round 4px 4px 18px 18px);transform:translate3d(0,calc(-16px + 16px * var(--cp,0)),0)}
 .taller-txt{display:grid;gap:4px;min-width:0}
-.taller-k{font-size:.6875rem;letter-spacing:.26em;text-transform:uppercase;color:rgb(244 244 242 / .58)}
+.taller-k{font-size:.75rem;letter-spacing:.22em;text-transform:uppercase;color:rgb(244 244 242 / .58)}
 .taller-t{font-size:clamp(1rem,1.25vw,1.15rem);font-weight:500;letter-spacing:-.01em;white-space:nowrap}
 .taller-seta{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:#dc0532;transition:transform .45s var(--curva)}
 .taller-seta svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -3002,3 +3002,5 @@ html.com-camada .camada-3d{top:0}
   .reels-trilho{transform:none!important;will-change:auto}
   .so-reels .prancha{height:auto;min-height:0;padding-top:96px;padding-bottom:40px}
 }
+/* (verificação 14/11) no telemóvel já não há palco preso: a sombra preta da costura cortava 2 px da linha vermelha */
+@media (max-width:899px){.so-reels .banda-cfg{box-shadow:none}}
